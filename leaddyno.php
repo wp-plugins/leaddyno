@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: LeadDyno for WordPress
-Version: 1.1
+Version: 1.2
 Plugin URI: http://www.leaddyno.com/wordpress/
 Description: Integrates LeadDyno on your Wordpress site
 Author: LeadDyno
@@ -43,7 +43,6 @@ if ( ! class_exists( 'LeadDyno_Admin' ) ) {
 			$this->filename = __FILE__;
 
 			add_action( 'admin_menu', array( &$this, 'register_settings_page' ) );
-			add_action( 'admin_menu', array( &$this, 'register_dashboard_page' ) );
 
 			add_filter( 'plugin_action_links', array( &$this, 'add_action_link' ), 10, 2 );
 
@@ -340,6 +339,13 @@ function leaddyno_script() {
 		return false;
 	}
 
+
+    // Bail early if public key is not set
+	if ( !$options['public_key'] ) {
+		echo "\n<!-- LeadDyno tracking not shown because public key is not set. -->\n";
+		return false;
+	}
+
 	// Debug
 	?>
 
@@ -381,6 +387,10 @@ add_action( 'wp_footer', 'leaddyno_script', 90 );
 function leaddyno_order_staus_changed( $order_id ) {
 
 	$options = leaddyno_get_options();
+
+	if ( !$options['private_key'] ) {
+	    return;
+	}
 
     if ( in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ) ) ) {
 

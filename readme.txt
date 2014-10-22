@@ -3,7 +3,7 @@ Contributors: leaddyno
 Tags: analytics, statistics, leaddyno, affiliate, outbound links, analysis
 Requires at least: 2.8
 Tested up to: 3.9
-Stable tag: 1.2
+Stable tag: 1.4
 
 Integrates the LeadDyno affiliate tracking and web analytics service into your blog/wordpress/woocommerce site.
 
@@ -31,6 +31,17 @@ buttons on your site that you want LeadDyno to track.
 
 
 == Changelog ==
+
+
+= 1.4 =
+
+* Fix incorrect woocommerce order total calculation
+
+
+= 1.3 =
+
+* Add support for Member Mouse affiliate hooks
+
 
 = 1.2 =
 

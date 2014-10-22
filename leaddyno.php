@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: LeadDyno for WordPress
-Version: 1.2
+Version: 1.4
 Plugin URI: http://www.leaddyno.com/wordpress/
 Description: Integrates LeadDyno on your Wordpress site
 Author: LeadDyno
@@ -384,7 +384,8 @@ add_action( 'wp_footer', 'leaddyno_script', 90 );
 
  * @uses leaddyno_get_options()
  */
-function leaddyno_order_staus_changed( $order_id ) {
+add_action( 'woocommerce_order_status_changed', 'leaddyno_order_status_changed' );
+function leaddyno_order_status_changed( $order_id ) {
 
 	$options = leaddyno_get_options();
 
@@ -405,7 +406,7 @@ function leaddyno_order_staus_changed( $order_id ) {
                                 $code = $coupons[0];
                         }
 
-                        $total = $order->get_total() - $order->get_total_discount() - $order->get_total_shipping();
+                        $total = $order->get_total() - $order->get_total_shipping();
 
                         $req = array('key' => $options['private_key'],
                                         'email' => $order->billing_email,
@@ -445,4 +446,71 @@ function leaddyno_order_staus_changed( $order_id ) {
         }
     }
 }
-add_action( 'woocommerce_order_status_changed', 'leaddyno_order_staus_changed' );
+
+
+add_action('mm_commission_initial', 'track_commission');
+function track_commission($data)
+{
+	$options = leaddyno_get_options();
+
+	if ( !$options['private_key'] ) {
+	    return;
+	}
+
+    // access coupons associated with the order
+    $couponCode = "";
+    $coupons = json_decode(stripslashes($data["order_coupons"]));
+    foreach($coupons as $coupon)
+    {
+        $couponCode = $coupon->code;
+        break;
+    }
+
+    $user = new WP_User($data['member_id']);
+    $user_email = $user->user_email;
+
+    $req = array('key' => $options['private_key'],
+                'email' =>  $user_email,
+                'purchase_code' => $data["order_number"],
+                'purchase_amount' => $data["order_total"],
+                'code' => $couponCode);
+
+    $url = 'https://api.leaddyno.com/v1/purchases';
+    $fields_string = http_build_query($req);
+    $ch = curl_init();
+    curl_setopt($ch,CURLOPT_URL,$url);
+    curl_setopt($ch,CURLOPT_POST,1);
+    curl_setopt($ch,CURLOPT_POSTFIELDS,$fields_string);
+    curl_setopt($ch,CURLOPT_RETURNTRANSFER,1);
+    $ld_result = curl_exec($ch);
+    curl_close($ch);
+    $ld_json = json_decode($ld_result);
+}
+
+add_action('mm_commission_cancel', 'track_commission_cancel');
+function track_commission_cancel($data)
+{
+	$options = leaddyno_get_options();
+
+	if ( !$options['private_key'] ) {
+	    return;
+	}
+
+    $user = new WP_User($data['member_id']);
+    $user_email = $user->user_email;
+
+    $req = array('key' => $options['private_key'],
+                'email' =>  $user_email,
+                'purchase_code' => $data["order_number"]);
+
+    $url = 'https://api.leaddyno.com/v1/purchases';
+    $fields_string = http_build_query($req);
+    $ch = curl_init();
+    curl_setopt($ch,CURLOPT_URL,$url);
+    curl_setopt($ch,CURLOPT_CUSTOMREQUEST, "DELETE");
+    curl_setopt($ch,CURLOPT_POSTFIELDS,$fields_string);
+    curl_setopt($ch,CURLOPT_RETURNTRANSFER,1);
+    $ld_result = curl_exec($ch);
+    curl_close($ch);
+    $ld_json = json_decode($ld_result);
+}

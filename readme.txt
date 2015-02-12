@@ -1,9 +1,9 @@
-=== LeadDyno for Wordpress ===
+=== LeadDyno Wordpress Plugin ===
 Contributors: leaddyno
 Tags: analytics, statistics, leaddyno, affiliate, outbound links, analysis
 Requires at least: 2.8
-Tested up to: 3.9
-Stable tag: 1.4
+Tested up to: 4.1
+Stable tag: 1.5
 
 Integrates the LeadDyno affiliate tracking and web analytics service into your blog/wordpress/woocommerce site.
 
@@ -32,6 +32,10 @@ buttons on your site that you want LeadDyno to track.
 
 == Changelog ==
 
+= 1.5 =
+
+* Support wordpress 4.x
+* Fix Member Mouse cancellation hooks
 
 = 1.4 =
 

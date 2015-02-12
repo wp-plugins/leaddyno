@@ -1,7 +1,7 @@
 <?php
 /*
-Plugin Name: LeadDyno for WordPress
-Version: 1.4
+Plugin Name: LeadDyno Wordpress Plugin
+Version: 1.5
 Plugin URI: http://www.leaddyno.com/wordpress/
 Description: Integrates LeadDyno on your Wordpress site
 Author: LeadDyno
@@ -448,14 +448,16 @@ function leaddyno_order_status_changed( $order_id ) {
 }
 
 
-add_action('mm_commission_initial', 'track_commission');
-function track_commission($data)
+add_action('mm_payment_received', 'mm_track_commission');
+function mm_track_commission($data)
 {
 	$options = leaddyno_get_options();
 
 	if ( !$options['private_key'] ) {
 	    return;
 	}
+
+    error_log("mm_payment_received data: " . print_r($data, true));
 
     // access coupons associated with the order
     $couponCode = "";
@@ -466,13 +468,11 @@ function track_commission($data)
         break;
     }
 
-    $user = new WP_User($data['member_id']);
-    $user_email = $user->user_email;
-
     $req = array('key' => $options['private_key'],
-                'email' =>  $user_email,
+                'email' =>  $data["email"],
                 'purchase_code' => $data["order_number"],
-                'purchase_amount' => $data["order_total"],
+                'purchase_amount' => $data["order_total"] - $data["order_shipping"],
+                'plan_code' => $data["membership_level_name"],
                 'code' => $couponCode);
 
     $url = 'https://api.leaddyno.com/v1/purchases';
@@ -487,8 +487,8 @@ function track_commission($data)
     $ld_json = json_decode($ld_result);
 }
 
-add_action('mm_commission_cancel', 'track_commission_cancel');
-function track_commission_cancel($data)
+add_action('mm_refund_issued', 'mm_track_commission_cancel');
+function mm_track_commission_cancel($data)
 {
 	$options = leaddyno_get_options();
 
@@ -496,11 +496,8 @@ function track_commission_cancel($data)
 	    return;
 	}
 
-    $user = new WP_User($data['member_id']);
-    $user_email = $user->user_email;
-
     $req = array('key' => $options['private_key'],
-                'email' =>  $user_email,
+                'email' =>  $data["email"],
                 'purchase_code' => $data["order_number"]);
 
     $url = 'https://api.leaddyno.com/v1/purchases';
@@ -514,3 +511,34 @@ function track_commission_cancel($data)
     curl_close($ch);
     $ld_json = json_decode($ld_result);
 }
+
+add_action('mm_member_status_change', 'mm_track_status_change');
+function mm_track_status_change($data)
+{
+	$options = leaddyno_get_options();
+
+	if ( !$options['private_key'] ) {
+	    return;
+	}
+
+    error_log("mm_member_status_change data: " . print_r($data, true));
+
+	if ( $data["status"] == '2' || $data["status"] == '7' || $data["status"] == '8') {
+
+		$req = array('key' => $options['private_key'],
+					'email' =>  $data["email"]);
+
+		$url = 'https://api.leaddyno.com/v1/purchases';
+		$fields_string = http_build_query($req);
+		$ch = curl_init();
+		curl_setopt($ch,CURLOPT_URL,$url);
+		curl_setopt($ch,CURLOPT_CUSTOMREQUEST, "DELETE");
+		curl_setopt($ch,CURLOPT_POSTFIELDS,$fields_string);
+		curl_setopt($ch,CURLOPT_RETURNTRANSFER,1);
+		$ld_result = curl_exec($ch);
+		curl_close($ch);
+		$ld_json = json_decode($ld_result);
+	}
+}
+
+

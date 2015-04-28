@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: LeadDyno Wordpress Plugin
-Version: 1.5
+Version: 1.6
 Plugin URI: http://www.leaddyno.com/wordpress/
 Description: Integrates LeadDyno on your Wordpress site
 Author: LeadDyno
@@ -240,7 +240,7 @@ if ( ! class_exists( 'LeadDyno_Admin' ) ) {
 								$rows[] = array(
                                     'id'      => 'domain',
                                     'label'   => 'Domain',
-                                    'desc'    => 'If blank, uses the wordpress website address.',
+                                    'desc'    => 'Recommended setting is to leave this blank. Overrides your website URL in special cases.',
                                     'content' => '<input class="text" type="text" value="' . $options['domain'] . '" name="domain" id="domain"/>',
                                 );
 
